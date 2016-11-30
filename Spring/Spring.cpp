@@ -11,6 +11,10 @@
 #define BLACK_BACKGROUND glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Black and opaque
 #define BALL_SIZE 0.5f
 #define CAMERA_START_POSITION glTranslatef(0, 0, -20.0f);
+#define SPRING_LENGTH_MAX 0.7f
+#define SPRING_LENGTH_MIN 0.3f
+#define NUM_OF_BALLS_IN_SPHERE 50.0f
+
 
 GLUquadric *quad;
 GLuint steelTexture;
@@ -19,11 +23,15 @@ GLuint steelTexture;
 GLfloat PI = 3.14159265359f;
 GLfloat t_spring = 0.0f;
 GLfloat x_spring, y_spring, z_spring;
+float spring_current_length = SPRING_LENGTH_MAX;
+float spring_speed = 0.01f;
+
+bool spring_speed_increase = true;
 
 //camera vars
 float angle = 0.0;// angle of rotation for the camera direction
-float lx = 0.0f, lz = -1.0f;// actual vector representing the camera's direction
-float x = 0.0f, z = 5.0f;// XZ position of the camera
+float lx = 0.0f, lz = -1.0f, ly = 0.0f;// actual vector representing the camera's direction
+float x = 0.0f, z = 5.0f, y = 0.0f;// XZ position of the camera
 
 
 void display(void);
@@ -64,6 +72,12 @@ void processSpecialKeys(int key, int xx, int yy) {
 		x -= lx * fraction;
 		z -= lz * fraction;
 		break;
+	case GLUT_KEY_PAGE_UP:
+		y += fraction;
+		break;
+	case GLUT_KEY_PAGE_DOWN:
+		y -= fraction;
+		break;
 	}
 }
 
@@ -103,17 +117,26 @@ void drawSpring() {
 	// Reset transformations
 	glLoadIdentity();
 	// Set the camera
-	gluLookAt(x, 1.0f, z,
-		x + lx, 1.0f, z + lz,
+	gluLookAt(x, y, z,
+		x + lx, y + ly, z + lz,
 		0.0f, 1.0f, 0.0f);
 
-	for (t_spring = 0.0f; t_spring <= 8 * PI; t_spring += (PI/100)){
+
+	if (spring_current_length < SPRING_LENGTH_MIN || spring_current_length > SPRING_LENGTH_MAX)
+		spring_speed_increase = !spring_speed_increase;
+
+	if(spring_speed_increase)
+		spring_current_length += spring_speed;
+	else spring_current_length -= spring_speed;
+
+	for (t_spring = 0.0f; t_spring <= 8 * PI; t_spring += (PI/ NUM_OF_BALLS_IN_SPHERE)){
 
 		x_spring = cos(t_spring) * (3 + cos(0));
 		z_spring = sin(t_spring) * (3 + cos(0));
-		y_spring = 0.6 * t_spring + sin(0);
+		y_spring = spring_current_length * t_spring + sin(0);
 
 		glPushMatrix();
+			glRotatef(180.0f, 0.0f, 0.0f, 1.0f); // rotate around OZ
 			glTranslatef(x_spring, y_spring, z_spring);
 			gluSphere(quad, BALL_SIZE, 20, 20);
 		glPopMatrix();

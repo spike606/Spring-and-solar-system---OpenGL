@@ -15,6 +15,17 @@
 GLUquadric *quad;
 GLuint steelTexture;
 
+//spring vars
+GLfloat PI = 3.14159265359f;
+GLfloat t_spring = 0.0f;
+GLfloat x_spring, y_spring, z_spring;
+
+//camera vars
+float angle = 0.0;// angle of rotation for the camera direction
+float lx = 0.0f, lz = -1.0f;// actual vector representing the camera's direction
+float x = 0.0f, z = 5.0f;// XZ position of the camera
+
+
 void display(void);
 void reshape(int x, int y);
 
@@ -29,6 +40,31 @@ GLuint loadTexture(Image* image) {
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image->width, image->height, 0,                            //The border of the image
 		GL_RGB, GL_UNSIGNED_BYTE, image->pixels);               //The actual pixel data
 	return textureId; //Returns the id of the texture
+}
+void processSpecialKeys(int key, int xx, int yy) {
+
+	float fraction = 0.1f;
+
+	switch (key) {
+	case GLUT_KEY_LEFT:
+		angle -= 0.01f;
+		lx = sin(angle);
+		lz = -cos(angle);
+		break;
+	case GLUT_KEY_RIGHT:
+		angle += 0.01f;
+		lx = sin(angle);
+		lz = -cos(angle);
+		break;
+	case GLUT_KEY_UP:
+		x += lx * fraction;
+		z += lz * fraction;
+		break;
+	case GLUT_KEY_DOWN:
+		x -= lx * fraction;
+		z -= lz * fraction;
+		break;
+	}
 }
 
 void initGL(void) {
@@ -52,9 +88,9 @@ int main(int argc, char **argv)
 
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 
-
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
+	glutSpecialFunc(processSpecialKeys);
 	initGL();                       // Our own OpenGL initialization
 
 	glutMainLoop();
@@ -63,26 +99,28 @@ int main(int argc, char **argv)
 
 void drawSpring() {
 	
-	GLfloat PI = 3.14159265359f;
 
-	GLfloat t = 0.0f;
-	GLfloat x, y, z;
-	//glTranslatef(0, 0, 0);
+	// Reset transformations
+	glLoadIdentity();
+	// Set the camera
+	gluLookAt(x, 1.0f, z,
+		x + lx, 1.0f, z + lz,
+		0.0f, 1.0f, 0.0f);
 
-	for (t = 0.0f; t <= 8 * PI; t += (PI/200)){
+	for (t_spring = 0.0f; t_spring <= 8 * PI; t_spring += (PI/100)){
 
-		x = cos(t) * (3 + cos(0));
-		z = sin(t) * (3 + cos(0));
-		y = 0.6 * t + sin(0);
+		x_spring = cos(t_spring) * (3 + cos(0));
+		z_spring = sin(t_spring) * (3 + cos(0));
+		y_spring = 0.6 * t_spring + sin(0);
 
 		glPushMatrix();
-			glTranslatef(x, y, z);
+			glTranslatef(x_spring, y_spring, z_spring);
 			gluSphere(quad, BALL_SIZE, 20, 20);
 		glPopMatrix();
 
 	}
-
-
+	glutPostRedisplay(); // Redraw screen with new mouse data.
+	//glutSwkapBuffers();
 
 }
 
@@ -95,7 +133,7 @@ void display(void)
 	glLoadIdentity();                // Reset the model-view matrix
 
 
-	CAMERA_START_POSITION
+	//CAMERA_START_POSITION
 
 	quad = gluNewQuadric();
 	gluQuadricDrawStyle(quad, GLU_FILL);

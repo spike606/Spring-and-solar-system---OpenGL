@@ -6,8 +6,11 @@
 #include <GL/glut.h> 
 #include <stdlib.h>
 #include "imageloader.h"
+#include <math.h>
 
 #define BLACK_BACKGROUND glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Black and opaque
+#define BALL_SIZE 0.5f
+#define CAMERA_START_POSITION glTranslatef(0, 0, -20.0f);
 
 GLUquadric *quad;
 GLuint steelTexture;
@@ -58,6 +61,31 @@ int main(int argc, char **argv)
 	return 0;
 }
 
+void drawSpring() {
+	
+	GLfloat PI = 3.14159265359f;
+
+	GLfloat t = 0.0f;
+	GLfloat x, y, z;
+	//glTranslatef(0, 0, 0);
+
+	for (t = 0.0f; t <= 8 * PI; t += (PI/200)){
+
+		x = cos(t) * (3 + cos(0));
+		z = sin(t) * (3 + cos(0));
+		y = 0.6 * t + sin(0);
+
+		glPushMatrix();
+			glTranslatef(x, y, z);
+			gluSphere(quad, BALL_SIZE, 20, 20);
+		glPopMatrix();
+
+	}
+
+
+
+}
+
 void display(void)
 {
 	glEnable(GL_TEXTURE_2D);
@@ -67,7 +95,7 @@ void display(void)
 	glLoadIdentity();                // Reset the model-view matrix
 
 
-	glTranslatef(0, 0, -5);
+	CAMERA_START_POSITION
 
 	quad = gluNewQuadric();
 	gluQuadricDrawStyle(quad, GLU_FILL);
@@ -77,11 +105,11 @@ void display(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glBindTexture(GL_TEXTURE_2D, steelTexture);
 
-	glPushMatrix();
-		gluSphere(quad, 1, 20, 20);
-		glTranslatef(0, 1, 0);
-		gluSphere(quad, 1, 20, 20);
-	glPopMatrix();
+	drawSpring();
+
+
+
+
 
 	glFlush();// Flush buffers to screen
 
@@ -92,7 +120,7 @@ void reshape(int x, int y)
 	if (y == 0 || x == 0) return;
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(90.0, (GLdouble)x / (GLdouble)y, 0.6, 21.0);
+	gluPerspective(90.0, (GLdouble)x / (GLdouble)y, 0.6, 50.0);
 	glMatrixMode(GL_MODELVIEW);
 	glViewport(0, 0, x, y);  //Use the whole window for rendering
 }

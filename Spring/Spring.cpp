@@ -11,21 +11,18 @@
 #define BLACK_BACKGROUND glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Black and opaque
 #define BALL_SPRING_SIZE 0.5f
 #define BALL_SIZE 5.0f
-#define CAMERA_START_POSITION glTranslatef(0, 0, -20.0f);
 #define SPRING_LENGTH_MAX 0.7f
 #define SPRING_LENGTH_MIN 0.3f
 #define NUM_OF_BALLS_IN_SPHERE 50.0f
 #define NUM_OF_BALLS_IN_ROD_1 30.0F
 #define NUM_OF_BALLS_IN_ROD_2 40.0F
 #define STEEL_BMP_FILE "steel2.bmp"
-#define WOOD_BMP_FILE "wood2.bmp"
+#define WOOD_BMP_FILE "wood3.bmp"
 #define QUBOID_WIDTH 5.0f
-
 
 GLUquadric *quad;
 GLuint steelTexture;
 GLuint woodTexture;
-
 
 //spring vars
 GLfloat PI = 3.14159265359f;
@@ -40,8 +37,18 @@ bool spring_speed_increase = true;
 
 //camera vars
 float angle = 0.0;// angle of rotation for the camera direction
+
+float angleX = 0.0;// angle of rotation for the camera direction
+float angleY = 0.0;// angle of rotation for the camera direction
+
 float lx = 0.0f, lz = -1.0f, ly = 0.0f;// actual vector representing the camera's direction
-float x = 0.0f, z = 20.0f, y = 0.0f;// XZ position of the camera
+float x = 0.0f, z = 40.0f, y = 0.0f;// XZ position of the camera
+
+float deltaAngleX = 0.0f;
+float deltaAngleY = 0.0f;
+
+int xOrigin = -1;
+int yOrigin = -1;
 
 
 GLuint loadTexture(Image* image) {
@@ -50,6 +57,8 @@ GLuint loadTexture(Image* image) {
 	glGenTextures(1, &textureId); //Make room for our texture
 	glBindTexture(GL_TEXTURE_2D, textureId); //Tell OpenGL which texture to edit
 											 //Map the image to the texture
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image->width, image->height, 0,                            //The border of the image
 		GL_RGB, GL_UNSIGNED_BYTE, image->pixels);               //The actual pixel data
 	return textureId; //Returns the id of the texture
@@ -85,30 +94,58 @@ void processSpecialKeys(int key, int xx, int yy) {
 		break;
 	}
 }
+void mouseButton(int button, int state, int x, int y) {
 
+	// only start motion if the left button is pressed
+	if (button == GLUT_LEFT_BUTTON) {
+
+		// when the button is released
+		if (state == GLUT_UP) {
+			angleX += deltaAngleX;
+			xOrigin = -1;
+		}
+		else {// state = GLUT_DOWN
+			xOrigin = x;
+			yOrigin = y;
+		}
+	}
+}
+void mouseMove(int x, int y) {
+
+	// this will only be true when the left button is down
+	if (xOrigin >= 0) {
+		// update deltaAngle
+		deltaAngleX = (x - xOrigin) * 0.01f;
+
+		// update camera's direction
+		lx = sin(angle + deltaAngleX);
+		lz = -cos(angle + deltaAngleX);
+	}
+}
 void initGL(void) {
+
+	BLACK_BACKGROUND
+	glClearDepth(1.0f);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+	glShadeModel(GL_FLAT);
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
 	Image *image = loadBMP(STEEL_BMP_FILE);
 	steelTexture = loadTexture(image);
 	Image *image2 = loadBMP(WOOD_BMP_FILE);
 	woodTexture = loadTexture(image2);
 
-
-	BLACK_BACKGROUND
-	glClearDepth(1.0f);
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
-	glShadeModel(GL_SMOOTH);
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-
-}
-void setTexture(GLUquadric* quad, GLuint texture) {
+	quad = gluNewQuadric();
 	gluQuadricDrawStyle(quad, GLU_FILL);
 	gluQuadricNormals(quad, GLU_SMOOTH);
 	gluQuadricTexture(quad, GL_TRUE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+}
+void setTexture(GLuint texture) {
+
 	glBindTexture(GL_TEXTURE_2D, texture);
+	glEnable(GL_TEXTURE_2D);
 }
 
 void moveSpring() {
@@ -180,76 +217,68 @@ void drawSpringWithRods() {
 		glPopMatrix();
 		last_top_y_pos -= (BALL_SPRING_SIZE / 4);
 	}
-
+	glDisable(GL_TEXTURE_2D);
 }
 void drawBall() {
 	last_bottom_y_pos += BALL_SIZE ;
 
-	setTexture(quad, woodTexture);
-
+	setTexture(woodTexture);
 	glPushMatrix();
 		glRotatef(180.0f, 0.0f, 0.0f, 1.0f); // rotate around OZ
 		glTranslatef(last_bottom_x_pos, last_bottom_y_pos, last_bottom_z_pos);
 		gluSphere(quad, BALL_SIZE, 20, 20);
 	glPopMatrix();
+	glDisable(GL_TEXTURE_2D);
+
 }
 void drawCuboid() {
 
 	last_top_x_pos *= 100;
-
-	setTexture(quad, woodTexture);
-
-	glPushMatrix();
 	glRotatef(180.0f, 0.0f, 0.0f, 1.0f); // rotate around OZ
+	setTexture(woodTexture);
+	glBegin(GL_QUADS);               
 
-		glBegin(GL_QUADS);                // Begin drawing the color cube with 6 quads
-									  // Top face (y = 1.0f)
-									  // Define vertices in counter-clockwise (CCW) order with normal pointing out
-		//glColor3f(0.0f, 1.0f, 0.0f);     // Green
-		glVertex3f(last_top_x_pos, last_top_y_pos, QUBOID_WIDTH);
-		glVertex3f(-last_top_x_pos, last_top_y_pos, QUBOID_WIDTH);
-		glVertex3f(-last_top_x_pos, last_top_y_pos, -QUBOID_WIDTH);
-		glVertex3f(last_top_x_pos, last_top_y_pos, -QUBOID_WIDTH);
+		//Top face
+		glTexCoord2f(0, 0); glVertex3f(last_top_x_pos, last_top_y_pos, QUBOID_WIDTH);
+		glTexCoord2f(0, 1); glVertex3f(-last_top_x_pos, last_top_y_pos, QUBOID_WIDTH);
+		glTexCoord2f(1, 0); glVertex3f(-last_top_x_pos, last_top_y_pos, -QUBOID_WIDTH);
+		glTexCoord2f(1, 1); glVertex3f(last_top_x_pos, last_top_y_pos, -QUBOID_WIDTH);
 
-		// Bottom face (y = -1.0f)
-		//glColor3f(1.0f, 0.5f, 0.0f);     // Orange
-		glVertex3f(last_top_x_pos, 2 * last_top_y_pos, -QUBOID_WIDTH);
-		glVertex3f(-last_top_x_pos, 2 * last_top_y_pos, -QUBOID_WIDTH);
-		glVertex3f(-last_top_x_pos, 2 * last_top_y_pos, QUBOID_WIDTH);
-		glVertex3f(last_top_x_pos, 2 * last_top_y_pos, QUBOID_WIDTH);
+		// Bottom face
+		glTexCoord2f(0, 0); glVertex3f(last_top_x_pos, 2 * last_top_y_pos, -QUBOID_WIDTH);
+		glTexCoord2f(0, 1); glVertex3f(-last_top_x_pos, 2 * last_top_y_pos, -QUBOID_WIDTH);
+		glTexCoord2f(1, 0); glVertex3f(-last_top_x_pos, 2 * last_top_y_pos, QUBOID_WIDTH);
+		glTexCoord2f(1, 1); glVertex3f(last_top_x_pos, 2 * last_top_y_pos, QUBOID_WIDTH);
 
-		// Front face  (z = 1.0f)
-		//glColor3f(1.0f, 0.0f, 0.0f);     // Red
-		glVertex3f(last_top_x_pos, 2 * last_top_y_pos, -QUBOID_WIDTH);
-		glVertex3f(-last_top_x_pos, 2 * last_top_y_pos, -QUBOID_WIDTH);
-		glVertex3f(-last_top_x_pos, last_top_y_pos, -QUBOID_WIDTH);
-		glVertex3f(last_top_x_pos, last_top_y_pos, -QUBOID_WIDTH);
+		// Front face
+		glTexCoord2f(0, 0); glVertex3f(last_top_x_pos, 2 * last_top_y_pos, -QUBOID_WIDTH);
+		glTexCoord2f(0, 1); glVertex3f(-last_top_x_pos, 2 * last_top_y_pos, -QUBOID_WIDTH);
+		glTexCoord2f(1, 0); glVertex3f(-last_top_x_pos, last_top_y_pos, -QUBOID_WIDTH);
+		glTexCoord2f(1, 1); glVertex3f(last_top_x_pos, last_top_y_pos, -QUBOID_WIDTH);
 
-		// Back face (z = -1.0f)
-		//glColor3f(1.0f, 1.0f, 0.0f);     // Yellow
-		glVertex3f(last_top_x_pos, last_top_y_pos, QUBOID_WIDTH);
-		glVertex3f(-last_top_x_pos, last_top_y_pos, QUBOID_WIDTH);
-		glVertex3f(-last_top_x_pos, 2 * last_top_y_pos, QUBOID_WIDTH);
-		glVertex3f(last_top_x_pos, 2 * last_top_y_pos, QUBOID_WIDTH);
+		// Back face
+		glTexCoord2f(0, 0); glVertex3f(last_top_x_pos, last_top_y_pos, QUBOID_WIDTH);
+		glTexCoord2f(0, 1); glVertex3f(-last_top_x_pos, last_top_y_pos, QUBOID_WIDTH);
+		glTexCoord2f(1, 0); glVertex3f(-last_top_x_pos, 2 * last_top_y_pos, QUBOID_WIDTH);
+		glTexCoord2f(1, 1); glVertex3f(last_top_x_pos, 2 * last_top_y_pos, QUBOID_WIDTH);
 
-		// Left face (x = -1.0f)
-		//glColor3f(0.0f, 0.0f, 1.0f);     // Blue
-		glVertex3f(-last_top_x_pos, 2 * last_top_y_pos, -QUBOID_WIDTH);
-		glVertex3f(-last_top_x_pos, 2 * last_top_y_pos, QUBOID_WIDTH);
-		glVertex3f(-last_top_x_pos, last_top_y_pos, QUBOID_WIDTH);
-		glVertex3f(-last_top_x_pos, last_top_y_pos, -QUBOID_WIDTH);
+		// Left face
+		glTexCoord2f(0, 0); glVertex3f(-last_top_x_pos, 2 * last_top_y_pos, -QUBOID_WIDTH);
+		glTexCoord2f(0, 1); glVertex3f(-last_top_x_pos, 2 * last_top_y_pos, QUBOID_WIDTH);
+		glTexCoord2f(1, 0); glVertex3f(-last_top_x_pos, last_top_y_pos, QUBOID_WIDTH);
+		glTexCoord2f(1, 1); glVertex3f(-last_top_x_pos, last_top_y_pos, -QUBOID_WIDTH);
 
-		// Right face (x = 1.0f)
-		//glColor3f(1.0f, 0.0f, 1.0f);     // Magenta
-		glVertex3f(last_top_x_pos, 2 * last_top_y_pos, QUBOID_WIDTH);
-		glVertex3f(last_top_x_pos, 2 * last_top_y_pos, -QUBOID_WIDTH);
-		glVertex3f(last_top_x_pos, last_top_y_pos, -QUBOID_WIDTH);
-		glVertex3f(last_top_x_pos, last_top_y_pos, QUBOID_WIDTH);
+		// Right face
+		glTexCoord2f(0, 0); glVertex3f(last_top_x_pos, 2 * last_top_y_pos, QUBOID_WIDTH);
+		glTexCoord2f(0, 1); glVertex3f(last_top_x_pos, 2 * last_top_y_pos, -QUBOID_WIDTH);
+		glTexCoord2f(1, 0); glVertex3f(last_top_x_pos, last_top_y_pos, -QUBOID_WIDTH);
+		glTexCoord2f(1, 1); glVertex3f(last_top_x_pos, last_top_y_pos, QUBOID_WIDTH);
+
 		glEnd();  // End of drawing color-cube
+		glFlush();
+		glDisable(GL_TEXTURE_2D);
+
 	glPopMatrix();
-
-
-
 }
 
 void reshape(int x, int y)
@@ -272,8 +301,8 @@ void display(void)
 
 	//CAMERA_START_POSITION
 
-	quad = gluNewQuadric();
-	setTexture(quad, steelTexture);
+
+	setTexture(steelTexture);
 
 	// Reset transformations
 	glLoadIdentity();
@@ -297,14 +326,16 @@ void display(void)
 int main(int argc, char **argv)
 {
 	glutInit(&argc, argv);
-	glutInitWindowSize(50, 50);
+	glutInitWindowSize(100, 100);
 	glutCreateWindow("Spring");
 
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_SINGLE);
 
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
 	glutSpecialFunc(processSpecialKeys);
+	glutMouseFunc(mouseButton);
+	glutMotionFunc(mouseMove);
 	initGL();                       // Our own OpenGL initialization
 
 	glutMainLoop();

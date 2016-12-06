@@ -36,10 +36,8 @@ float last_top_x_pos, last_top_y_pos, last_top_z_pos;
 bool spring_speed_increase = true;
 
 //camera vars
-float angle = 0.0;// angle of rotation for the camera direction
-
 float angleX = 0.0;// angle of rotation for the camera direction
-float angleY = 0.0;// angle of rotation for the camera direction
+float angleY = 0.0;
 
 float lx = 0.0f, lz = -1.0f, ly = 0.0f;// actual vector representing the camera's direction
 float x = 0.0f, z = 40.0f, y = 0.0f;// XZ position of the camera
@@ -68,16 +66,16 @@ void processSpecialKeys(int key, int xx, int yy) {
 	float fraction = 0.5f;
 
 	switch (key) {
-	case GLUT_KEY_LEFT:
-		angle -= 0.1f;
-		lx = sin(angle);
-		lz = -cos(angle);
-		break;
-	case GLUT_KEY_RIGHT:
-		angle += 0.1f;
-		lx = sin(angle);
-		lz = -cos(angle);
-		break;
+	//case GLUT_KEY_LEFT:
+	//	angleX -= 0.1f;
+	//	lx = sin(angleX);
+	//	lz = -cos(angleX);
+	//	break;
+	//case GLUT_KEY_RIGHT:
+	//	angleX += 0.1f;
+	//	lx = sin(angleX);
+	//	lz = -cos(angleX);
+	//	break;
 	case GLUT_KEY_UP:
 		x += lx * fraction;
 		z += lz * fraction;
@@ -101,8 +99,10 @@ void mouseButton(int button, int state, int x, int y) {
 
 		// when the button is released
 		if (state == GLUT_UP) {
-			angleX += deltaAngleX;
+			angleX -= deltaAngleX;
 			xOrigin = -1;
+			angleY -= deltaAngleY;
+			yOrigin = -1;
 		}
 		else {// state = GLUT_DOWN
 			xOrigin = x;
@@ -118,8 +118,16 @@ void mouseMove(int x, int y) {
 		deltaAngleX = (x - xOrigin) * 0.01f;
 
 		// update camera's direction
-		lx = sin(angle + deltaAngleX);
-		lz = -cos(angle + deltaAngleX);
+		lx = sin(angleX - deltaAngleX);
+		lz = -cos(angleX - deltaAngleX);
+	}
+	if (yOrigin >= 0) {
+		deltaAngleY = (y - yOrigin) * 0.01f;
+
+		ly = tan(angleY - deltaAngleY);
+
+		//lz = -cos(angleY - deltaAngleY);
+
 	}
 }
 void initGL(void) {
@@ -286,7 +294,7 @@ void reshape(int x, int y)
 	if (y == 0 || x == 0) return;
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(90.0, (GLdouble)x / (GLdouble)y, 0.6, 50.0);
+	gluPerspective(90, (GLdouble)x / (GLdouble)y, 0.01, 50.0);
 	glMatrixMode(GL_MODELVIEW);
 	glViewport(0, 0, x, y);  //Use the whole window for rendering
 }
@@ -299,15 +307,13 @@ void display(void)
 	glLoadIdentity();                // Reset the model-view matrix
 
 
-	//CAMERA_START_POSITION
-
-
 	setTexture(steelTexture);
 
 	// Reset transformations
 	glLoadIdentity();
 
 	// Set the camera
+
 	gluLookAt(x, y, z,
 		x + lx, y + ly, z + lz,
 		0.0f, 1.0f, 0.0f);

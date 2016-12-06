@@ -79,10 +79,12 @@ void processSpecialKeys(int key, int xx, int yy) {
 	case GLUT_KEY_UP:
 		x += lx * fraction;
 		z += lz * fraction;
+		y += ly * fraction;
 		break;
 	case GLUT_KEY_DOWN:
 		x -= lx * fraction;
 		z -= lz * fraction;
+		y -= ly * fraction;
 		break;
 	case GLUT_KEY_PAGE_UP:
 		y += fraction;

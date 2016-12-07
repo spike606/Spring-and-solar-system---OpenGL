@@ -9,7 +9,7 @@
 #include <math.h>
 
 #define BLACK_BACKGROUND glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Black and opaque
-#define BALL_SPRING_SIZE 0.5f
+#define SUN_SIZE 0.5f
 #define BALL_SIZE 5.0f
 #define SPRING_LENGTH_MAX 0.7f
 #define SPRING_LENGTH_MIN 0.3f
@@ -180,7 +180,7 @@ void drawSpringWithRods() {
 		glPushMatrix();
 			glRotatef(180.0f, 0.0f, 0.0f, 1.0f); // rotate around OZ
 			glTranslatef(x_spring, y_spring, z_spring);
-			gluSphere(quad, BALL_SPRING_SIZE, 20, 20);
+			gluSphere(quad, SUN_SIZE, 20, 20);
 		glPopMatrix();
 	}
 
@@ -193,17 +193,17 @@ void drawSpringWithRods() {
 		glPushMatrix();
 			glRotatef(180.0f, 0.0f, 0.0f, 1.0f); // rotate around OZ
 			glTranslatef(last_bottom_x_pos, last_bottom_y_pos, last_bottom_z_pos);
-			gluSphere(quad, BALL_SPRING_SIZE, 20, 20);
+			gluSphere(quad, SUN_SIZE, 20, 20);
 		glPopMatrix();
-		last_bottom_x_pos -= (BALL_SPRING_SIZE / 4);
+		last_bottom_x_pos -= (SUN_SIZE / 4);
 	}
 	for (i = 0; i < NUM_OF_BALLS_IN_ROD_2; i++) {
 		glPushMatrix();
 			glRotatef(180.0f, 0.0f, 0.0f, 1.0f); // rotate around OZ
 			glTranslatef(last_bottom_x_pos, last_bottom_y_pos, last_bottom_z_pos);
-			gluSphere(quad, BALL_SPRING_SIZE, 20, 20);
+			gluSphere(quad, SUN_SIZE, 20, 20);
 		glPopMatrix();
-		last_bottom_y_pos += (BALL_SPRING_SIZE / 4);
+		last_bottom_y_pos += (SUN_SIZE / 4);
 	}
 
 	last_top_x_pos = 4.0f;
@@ -215,17 +215,17 @@ void drawSpringWithRods() {
 		glPushMatrix();
 		glRotatef(180.0f, 0.0f, 0.0f, 1.0f); // rotate around OZ
 		glTranslatef(last_top_x_pos, last_top_y_pos, last_top_z_pos);
-		gluSphere(quad, BALL_SPRING_SIZE, 20, 20);
+		gluSphere(quad, SUN_SIZE, 20, 20);
 		glPopMatrix();
-		last_top_x_pos -= (BALL_SPRING_SIZE / 4);
+		last_top_x_pos -= (SUN_SIZE / 4);
 	}
 	for (i = 0; i < NUM_OF_BALLS_IN_ROD_2; i++) {
 		glPushMatrix();
 		glRotatef(180.0f, 0.0f, 0.0f, 1.0f); // rotate around OZ
 		glTranslatef(last_top_x_pos, last_top_y_pos, last_top_z_pos);
-		gluSphere(quad, BALL_SPRING_SIZE, 20, 20);
+		gluSphere(quad, SUN_SIZE, 20, 20);
 		glPopMatrix();
-		last_top_y_pos -= (BALL_SPRING_SIZE / 4);
+		last_top_y_pos -= (SUN_SIZE / 4);
 	}
 	glDisable(GL_TEXTURE_2D);
 }

@@ -29,7 +29,8 @@ GLfloat x_spring, y_spring, z_spring;
 float spring_speed = 0.01f;
 float last_bottom_x_pos, last_bottom_y_pos, last_bottom_z_pos;
 float last_top_x_pos, last_top_y_pos, last_top_z_pos;
-
+float earthAngle = 0.0f;
+float sunAngle = 0.0f;
 bool spring_speed_increase = true;
 
 //camera vars
@@ -268,8 +269,7 @@ void initGL(void) {
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globalAmbient);
 	glEnable(GL_LIGHTING);
 
-	// Material properties
-	Material g_SunMaterial(color4(0, 0, 0, 1), color4(1, 1, 1, 1), color4(1, 1, 1, 1));
+
 	
 }
 void setTexture(GLuint texture) {
@@ -277,24 +277,28 @@ void setTexture(GLuint texture) {
 	glEnable(GL_TEXTURE_2D);
 }
 
-void moveSpring() {
+void moves() {
 	//if (spring_current_length < SPRING_LENGTH_MIN || spring_current_length > SPRING_LENGTH_MAX)
 	//	spring_speed_increase = !spring_speed_increase;
 
 	//if (spring_speed_increase)
 	//	spring_current_length += spring_speed;
 	//else spring_current_length -= spring_speed;
+	earthAngle += 0.05;
+	sunAngle += 0.05;
 }
 void drawSun() {
 
 	setTexture(sunTexture);
 	Light g_SunLight(GL_LIGHT0, color4(0, 0, 0, 1), color4(1, 1, 1, 1), color4(1, 1, 1, 1), float4(0, 0, 0, 1));
+	// Material properties
+	Material g_SunMaterial(color4(0, 0, 0, 1), color4(1, 1, 1, 1), color4(1, 1, 1, 1));
 
 	glPushMatrix();
 	g_SunLight.Activate();
 	glDisable(GL_LIGHTING);
-	//glRotatef(180.0f, 0.0f, 0.0f, 1.0f); // rotate around OZ
-	//glTranslatef(x_spring, y_spring, z_spring);
+	glRotatef(sunAngle, 0, 1, 0);//rotate around itself
+	g_SunMaterial.Apply();
 	gluSphere(quad, SUN_SIZE, 40, 40);
 	glPopMatrix();
 	glDisable(GL_TEXTURE_2D);
@@ -309,10 +313,15 @@ void drawEarth() {
 
 	glPushMatrix();
 	//glRotatef(180.0f, 0.0f, 0.0f, 1.0f); // rotate around OZ
-	glTranslatef(-15.0f, 0, 0);
-	g_EarthMaterial.Apply();
-	gluSphere(quad, EARTH_SIZE, 360, 180);
+		glRotatef(earthAngle, 0, 1, 0);//rotate around sun	
+		glTranslatef(-15.0f, 0, 0);
+			glPushMatrix();
+				glRotatef(earthAngle, 0, 1, 0);//rotate around itself
+				g_EarthMaterial.Apply();
+				gluSphere(quad, EARTH_SIZE, 360, 180);
+			glPopMatrix();
 	glPopMatrix();
+
 	glDisable(GL_TEXTURE_2D);
 	return;
 
@@ -345,7 +354,7 @@ void display(void)
 		x + lx, y + ly, z + lz,
 		0.0f, 1.0f, 0.0f);
 
-	//moveSpring();
+	moves();
 	drawSun();
 	drawEarth();
 

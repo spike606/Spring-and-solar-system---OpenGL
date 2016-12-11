@@ -12,15 +12,69 @@
 #include <glm/mat4x4.hpp> // glm::mat4
 
 #define BLACK_BACKGROUND glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Black and opaque
-#define SUN_SIZE 5.0f
-#define EARTH_SIZE 3.0f
+#define SUN_SIZE 60.0f
+#define MERCURY_SIZE 0.24f
+#define VENUS_SIZE 0.6f
+#define EARTH_SIZE 0.64f
+#define MARS_SIZE 0.33f
+#define JUPITER_SIZE 7.0f
+#define SATURN_SIZE 6.0f
+#define URAN_SIZE 2.5f
+#define NEPTUN_SIZE 2.4f
+
 #define SUN_BMP_FILE "sun.bmp"
+#define MERCURY_BMP_FILE "mercury.bmp"
+#define VENUS_BMP_FILE "venus.bmp"
 #define EARTH_BMP_FILE "earth.bmp"
+#define MARS_BMP_FILE "mars.bmp"
+#define JUPITER_BMP_FILE "jupiter.bmp"
+#define SATURN_BMP_FILE "saturn.bmp"
+#define URAN_BMP_FILE "uran.bmp"
+#define NEPTUN_BMP_FILE "neptun.bmp"
+
+#define MERCURY_POSITION glTranslatef(163.0f, 0.0f, 0.0f);//distance from sun
+#define VENUS_POSITION glTranslatef(-166.0f, 0.0f, 30.0f);//distance from sun
+#define EARTH_POSITION glTranslatef(-169.0f, 0.0f, 120.0f);//distance from sun
+#define MARS_POSITION glTranslatef(-174.0f, 0.0f, 150.0f);//distance from sun
+#define JUPITER_POSITION glTranslatef(-208.0f, 0.0f, -300.0f);//distance from sun
+#define SATURN_POSITION glTranslatef(248.0f, 0.0f, 280.0f);//distance from sun
+#define URAN_POSITION glTranslatef(338.0f, 0.0f, 300.0f);//distance from sun
+#define NEPTUN_POSITION glTranslatef(-440.0f, 0.0f, 390.0f);//distance from sun
 
 
 GLUquadric *quad;
 GLuint sunTexture;
+GLuint mercuryTexture;
+GLuint venusTexture;
 GLuint earthTexture;
+GLuint marsTexture;
+GLuint jupiterTexture;
+GLuint saturnTexture;
+GLuint uranTexture;
+GLuint neptunTexture;
+
+//planets vars
+float mercuryAngle = 0.0f;
+float mercuryAngleItself = 0.0f;
+float venusAngle = 0.0f;
+float venusAngleItself = 0.0f;
+float earthAngle = 0.0f;
+float earthAngleItself = 0.0f;
+float marsAngle = 0.0f;
+float marsAngleItself = 0.0f;
+float jupiterAngle = 0.0f;
+float jupiterAngleItself = 0.0f;
+float saturnAngle = 0.0f;
+float saturnAngleItself = 0.0f;
+float uranAngle = 0.0f;
+float uranAngleItself = 0.0f;
+float neptunAngle = 0.0f;
+float neptunAngleItself = 0.0f;
+float sunAngle = 0.0f;
+
+float speed = 1.0f;
+float speed_min = 0.1f;
+float speed_max = 10.0f;
 
 //spring vars
 GLfloat PI = 3.14159265359f;
@@ -29,8 +83,7 @@ GLfloat x_spring, y_spring, z_spring;
 float spring_speed = 0.01f;
 float last_bottom_x_pos, last_bottom_y_pos, last_bottom_z_pos;
 float last_top_x_pos, last_top_y_pos, last_top_z_pos;
-float earthAngle = 0.0f;
-float sunAngle = 0.0f;
+
 bool spring_speed_increase = true;
 
 //camera vars
@@ -38,7 +91,7 @@ float angleX = 0.0;// angle of rotation for the camera direction
 float angleY = 0.0;
 
 float lx = 0.0f, lz = -1.0f, ly = 0.0f;// actual vector representing the camera's direction
-float x = 0.0f, z = 40.0f, y = 0.0f;// XZ position of the camera
+float x = 0.0f, z = 100.0f, y = 0.0f;// XZ position of the camera
 
 float deltaAngleX = 0.0f;
 float deltaAngleY = 0.0f;
@@ -79,7 +132,7 @@ struct Light
 		, color4 ambient = color4(0.0, 0.0, 0.0, 1.0)
 		, color4 diffuse = color4(1.0, 1.0, 1.0, 1.0)
 		, color4 specular = color4(1.0, 1.0, 1.0, 1.0)
-		, float4 position = float4(0.0, 0.0, 1.0, 0.0)
+		, float4 position = float4(0.0, 0.0, 0.0, 0.0)
 		, float3 spotDirection = float3(0.0, 0.0, 1.0)
 		, float  spotExponent = 0.0
 		, float  spotCutoff = 180.0f
@@ -176,7 +229,7 @@ GLuint loadTexture(Image* image) {
 }
 void processSpecialKeys(int key, int xx, int yy) {
 
-	float fraction = 0.2f;
+	float fraction = 2.0f;
 
 	switch (key) {
 		//case GLUT_KEY_LEFT:
@@ -204,6 +257,21 @@ void processSpecialKeys(int key, int xx, int yy) {
 		break;
 	case GLUT_KEY_PAGE_DOWN:
 		y -= fraction;
+		break;
+	}
+}
+void processKeyboardKeys(unsigned char key, int x, int y)
+{
+	switch (key) {
+	case 'w':
+		if (speed < speed_max)
+			speed += 0.1f;
+		break;
+	case 's':
+		if (speed > speed_min)
+			speed -= 0.1f;
+		break;
+	default:
 		break;
 	}
 }
@@ -256,8 +324,30 @@ void initGL(void) {
 
 	Image *image = loadBMP(SUN_BMP_FILE);
 	sunTexture = loadTexture(image);
+
 	Image *image2 = loadBMP(EARTH_BMP_FILE);
 	earthTexture = loadTexture(image2);
+
+	Image *image3 = loadBMP(MERCURY_BMP_FILE);
+	mercuryTexture = loadTexture(image3);
+
+	Image *image4 = loadBMP(VENUS_BMP_FILE);
+	venusTexture = loadTexture(image4);
+
+	Image *image5 = loadBMP(MARS_BMP_FILE);
+	marsTexture = loadTexture(image5);
+
+	Image *image6 = loadBMP(JUPITER_BMP_FILE);
+	jupiterTexture = loadTexture(image6);
+
+	Image *image7 = loadBMP(SATURN_BMP_FILE);
+	saturnTexture = loadTexture(image7);
+
+	Image *image8 = loadBMP(URAN_BMP_FILE);
+	uranTexture = loadTexture(image8);
+
+	Image *image9 = loadBMP(NEPTUN_BMP_FILE);
+	neptunTexture = loadTexture(image9);
 
 	quad = gluNewQuadric();
 	gluQuadricDrawStyle(quad, GLU_FILL);
@@ -278,14 +368,23 @@ void setTexture(GLuint texture) {
 }
 
 void moves() {
-	//if (spring_current_length < SPRING_LENGTH_MIN || spring_current_length > SPRING_LENGTH_MAX)
-	//	spring_speed_increase = !spring_speed_increase;
-
-	//if (spring_speed_increase)
-	//	spring_current_length += spring_speed;
-	//else spring_current_length -= spring_speed;
-	earthAngle += 0.05;
-	sunAngle += 0.05;
+	mercuryAngle += (0.05 * speed);
+	mercuryAngleItself += (1.0f * speed);
+	venusAngle += (0.05 * speed);
+	venusAngleItself += (1.0f * speed);
+	earthAngle += (0.05 * speed);
+	earthAngleItself += (1.0f * speed);
+	marsAngle += (0.05 * speed);
+	marsAngleItself += (1.0f * speed);
+	jupiterAngle += (0.05 * speed);
+	jupiterAngleItself += (1.0f * speed);
+	saturnAngle += (0.05 * speed);
+	saturnAngleItself += (1.0f * speed);
+	uranAngle += (0.05 * speed);
+	uranAngleItself += (1.0f * speed);
+	neptunAngle += (0.05 * speed);
+	neptunAngleItself += (1.0f * speed);
+	sunAngle += (0.2 * speed);
 }
 void drawSun() {
 
@@ -295,14 +394,53 @@ void drawSun() {
 	Material g_SunMaterial(color4(0, 0, 0, 1), color4(1, 1, 1, 1), color4(1, 1, 1, 1));
 
 	glPushMatrix();
-	g_SunLight.Activate();
-	glDisable(GL_LIGHTING);
-	glRotatef(sunAngle, 0, 1, 0);//rotate around itself
-	g_SunMaterial.Apply();
-	gluSphere(quad, SUN_SIZE, 40, 40);
+		g_SunLight.Activate();
+		glDisable(GL_LIGHTING);
+		glRotatef(sunAngle, 0, 1, 0);//rotate around itself
+		g_SunMaterial.Apply();
+		gluSphere(quad, SUN_SIZE, 40, 40);
 	glPopMatrix();
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_LIGHTING);
+	return;
+
+}
+void drawMercury() {
+
+	setTexture(mercuryTexture);
+	Material g_EarthMaterial(color4(0.2, 0.2, 0.2, 1.0), color4(1, 1, 1, 1), color4(1, 1, 1, 1), color4(0, 0, 0, 1), 50);
+
+	glPushMatrix();
+		glRotatef(mercuryAngle, 0, 1, 0);//rotate around sun	
+		MERCURY_POSITION
+		glPushMatrix();
+			glRotatef(mercuryAngleItself, 0, 1, 0);//rotate around itself
+			g_EarthMaterial.Apply();
+			gluSphere(quad, MERCURY_SIZE, 360, 180);
+		glPopMatrix();
+	glPopMatrix();
+
+	glDisable(GL_TEXTURE_2D);
+	return;
+
+}
+void drawVenus() {
+
+	setTexture(venusTexture);
+	Material g_EarthMaterial(color4(0.2, 0.2, 0.2, 1.0), color4(1, 1, 1, 1), color4(1, 1, 1, 1), color4(0, 0, 0, 1), 50);
+
+	glPushMatrix();
+		glRotatef(venusAngle, 0, 1, 0);//rotate around sun	
+		VENUS_POSITION
+		glPushMatrix();
+			glRotatef(venusAngleItself, 0, 1, 0);//rotate around itself
+			glRotatef(-90, 1, 0, 0);//rotate 90 deg!
+			g_EarthMaterial.Apply();
+			gluSphere(quad, VENUS_SIZE, 360, 180);
+		glPopMatrix();
+	glPopMatrix();
+
+	glDisable(GL_TEXTURE_2D);
 	return;
 
 }
@@ -312,14 +450,114 @@ void drawEarth() {
 	Material g_EarthMaterial(color4(0.2, 0.2, 0.2, 1.0), color4(1, 1, 1, 1), color4(1, 1, 1, 1), color4(0, 0, 0, 1), 50);
 
 	glPushMatrix();
-	//glRotatef(180.0f, 0.0f, 0.0f, 1.0f); // rotate around OZ
 		glRotatef(earthAngle, 0, 1, 0);//rotate around sun	
-		glTranslatef(-15.0f, 0, 0);
-			glPushMatrix();
-				glRotatef(earthAngle, 0, 1, 0);//rotate around itself
-				g_EarthMaterial.Apply();
-				gluSphere(quad, EARTH_SIZE, 360, 180);
-			glPopMatrix();
+		EARTH_POSITION
+		glPushMatrix();
+			glRotatef(earthAngleItself, 0, 1, 0);//rotate around itself
+			glRotatef(-90, 1, 0, 0);//rotate 90 deg!
+			g_EarthMaterial.Apply();
+			gluSphere(quad, EARTH_SIZE, 360, 180);
+		glPopMatrix();
+	glPopMatrix();
+
+	glDisable(GL_TEXTURE_2D);
+	return;
+
+}
+void drawMars() {
+
+	setTexture(marsTexture);
+	Material g_EarthMaterial(color4(0.2, 0.2, 0.2, 1.0), color4(1, 1, 1, 1), color4(1, 1, 1, 1), color4(0, 0, 0, 1), 50);
+
+	glPushMatrix();
+		glRotatef(marsAngle, 0, 1, 0);//rotate around sun	
+		MARS_POSITION
+		glPushMatrix();
+			glRotatef(marsAngleItself, 0, 1, 0);//rotate around itself
+			glRotatef(-90, 1, 0, 0);//rotate 90 deg!
+			g_EarthMaterial.Apply();
+			gluSphere(quad, MARS_SIZE, 360, 180);
+		glPopMatrix();
+	glPopMatrix();
+
+	glDisable(GL_TEXTURE_2D);
+	return;
+
+}
+void drawJupiter() {
+
+	setTexture(jupiterTexture);
+	Material g_EarthMaterial(color4(0.2, 0.2, 0.2, 1.0), color4(1, 1, 1, 1), color4(1, 1, 1, 1), color4(0, 0, 0, 1), 50);
+
+	glPushMatrix();
+		glRotatef(jupiterAngle, 0, 1, 0);//rotate around sun	
+		JUPITER_POSITION
+		glPushMatrix();
+			glRotatef(jupiterAngleItself, 0, 1, 0);//rotate around itself
+			glRotatef(-90, 1, 0, 0);//rotate 90 deg!
+			g_EarthMaterial.Apply();
+			gluSphere(quad, JUPITER_SIZE, 360, 180);
+		glPopMatrix();
+	glPopMatrix();
+
+	glDisable(GL_TEXTURE_2D);
+	return;
+
+}
+void drawSaturn() {
+	
+	setTexture(saturnTexture);
+	Material g_EarthMaterial(color4(0.2, 0.2, 0.2, 1.0), color4(1, 1, 1, 1), color4(1, 1, 1, 1), color4(0, 0, 0, 1), 50);
+
+	glPushMatrix();
+		glRotatef(saturnAngle, 0, 1, 0);//rotate around sun	
+		SATURN_POSITION
+		glPushMatrix();
+			glRotatef(saturnAngleItself, 0, 1, 0);//rotate around itself
+			glRotatef(-90, 1, 0, 0);//rotate 90 deg!
+			g_EarthMaterial.Apply();
+			gluSphere(quad, SATURN_SIZE, 360, 180);
+		glPopMatrix();
+	glPopMatrix();
+
+	glDisable(GL_TEXTURE_2D);
+	return;
+
+}
+void drawUran() {
+
+	setTexture(uranTexture);
+	Material g_EarthMaterial(color4(0.2, 0.2, 0.2, 1.0), color4(1, 1, 1, 1), color4(1, 1, 1, 1), color4(0, 0, 0, 1), 50);
+
+	glPushMatrix();
+		glRotatef(uranAngle, 0, 1, 0);//rotate around sun	
+		URAN_POSITION
+		glPushMatrix();
+			glRotatef(uranAngleItself, 0, 1, 0);//rotate around itself
+			glRotatef(-90, 1, 0, 0);//rotate 90 deg!
+			g_EarthMaterial.Apply();
+			gluSphere(quad, URAN_SIZE, 360, 180);
+		glPopMatrix();
+	glPopMatrix();
+
+	glDisable(GL_TEXTURE_2D);
+	return;
+
+}
+void drawNeptun() {
+
+	setTexture(neptunTexture);
+	Material g_EarthMaterial(color4(0.2, 0.2, 0.2, 1.0), color4(1, 1, 1, 1), color4(1, 1, 1, 1), color4(0, 0, 0, 1), 50);
+
+	glPushMatrix();
+		glRotatef(neptunAngle, 0, 1, 0);//rotate around sun	
+		NEPTUN_POSITION
+		glPushMatrix();
+			glRotatef(neptunAngleItself, 0, 1, 0);//rotate around itself
+			glRotatef(-90, 1, 0, 0);//rotate 90 deg!
+			g_EarthMaterial.Apply();
+			gluSphere(quad, NEPTUN_SIZE, 360, 180);
+		glPopMatrix();
 	glPopMatrix();
 
 	glDisable(GL_TEXTURE_2D);
@@ -327,12 +565,14 @@ void drawEarth() {
 
 }
 
+
+
 void reshape(int x, int y)
 {
 	if (y == 0 || x == 0) return;
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(90, (GLdouble)x / (GLdouble)y, 0.01, 50.0);
+	gluPerspective(90, (GLdouble)x / (GLdouble)y, 0.01, 1000.0);
 	glMatrixMode(GL_MODELVIEW);
 	glViewport(0, 0, x, y);  //Use the whole window for rendering
 }
@@ -344,8 +584,6 @@ void display(void)
 	glMatrixMode(GL_MODELVIEW);      // To operate on Model-View matrix
 	glLoadIdentity();                // Reset the model-view matrix
 
-
-
 	// Reset transformations
 	glLoadIdentity();
 
@@ -356,10 +594,19 @@ void display(void)
 
 	moves();
 	drawSun();
+	drawMercury();
+	drawVenus();
 	drawEarth();
-
+	drawMars();
+	drawJupiter();
+	drawSaturn();
+	drawUran();
+	drawNeptun();
 
 	glutPostRedisplay(); // Redraw screen with new mouse data.
+						 /* this redraws the scene without
+						 waiting for the display callback so that any changes appear
+						 instantly */
 	glutSwapBuffers();
 
 	glFlush();// Flush buffers to screen
@@ -368,7 +615,7 @@ void display(void)
 int main(int argc, char **argv)
 {
 	glutInit(&argc, argv);
-	glutInitWindowSize(100, 100);
+	glutInitWindowSize(600, 600);
 	glutCreateWindow("Spring");
 
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_SINGLE);
@@ -376,6 +623,7 @@ int main(int argc, char **argv)
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
 	glutSpecialFunc(processSpecialKeys);
+	glutKeyboardFunc(processKeyboardKeys);
 	glutMouseFunc(mouseButton);
 	glutMotionFunc(mouseMove);
 	initGL();                       // Our own OpenGL initialization

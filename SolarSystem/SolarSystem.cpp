@@ -1,6 +1,7 @@
 // Spring.cpp : Defines the entry point for the console application.
 //
-
+//dodac menu 
+// predefiniowane kamery - z boku, z gory i kamera na ziemi
 #include <windows.h> 
 #include <GL/gl.h> 
 #include <GL/glut.h> 
@@ -16,6 +17,7 @@
 #define MERCURY_SIZE 0.24f
 #define VENUS_SIZE 0.6f
 #define EARTH_SIZE 0.64f
+#define MOON_SIZE 0.24f
 #define MARS_SIZE 0.33f
 #define JUPITER_SIZE 7.0f
 #define SATURN_SIZE 6.0f
@@ -26,20 +28,22 @@
 #define MERCURY_BMP_FILE "mercury.bmp"
 #define VENUS_BMP_FILE "venus.bmp"
 #define EARTH_BMP_FILE "earth.bmp"
+#define MOON_BMP_FILE "moon.bmp"
 #define MARS_BMP_FILE "mars.bmp"
 #define JUPITER_BMP_FILE "jupiter.bmp"
 #define SATURN_BMP_FILE "saturn.bmp"
 #define URAN_BMP_FILE "uran.bmp"
 #define NEPTUN_BMP_FILE "neptun.bmp"
 
-#define MERCURY_POSITION glTranslatef(163.0f, 0.0f, 0.0f);//distance from sun
-#define VENUS_POSITION glTranslatef(-166.0f, 0.0f, 30.0f);//distance from sun
-#define EARTH_POSITION glTranslatef(-169.0f, 0.0f, 120.0f);//distance from sun
-#define MARS_POSITION glTranslatef(-174.0f, 0.0f, 150.0f);//distance from sun
-#define JUPITER_POSITION glTranslatef(-208.0f, 0.0f, -300.0f);//distance from sun
-#define SATURN_POSITION glTranslatef(248.0f, 0.0f, 280.0f);//distance from sun
-#define URAN_POSITION glTranslatef(338.0f, 0.0f, 300.0f);//distance from sun
-#define NEPTUN_POSITION glTranslatef(-440.0f, 0.0f, 390.0f);//distance from sun
+#define MERCURY_POSITION glTranslatef(163.0f, 0.0f, 0.0f);
+#define VENUS_POSITION glTranslatef(-166.0f, 0.0f, 30.0f);
+#define EARTH_POSITION glTranslatef(-169.0f, 0.0f, 120.0f);
+#define MOON_POSITION glTranslatef(-3.0f, 0.0f, 0.0f);//realitve to earth
+#define MARS_POSITION glTranslatef(-174.0f, 0.0f, 150.0f);
+#define JUPITER_POSITION glTranslatef(-208.0f, 0.0f, -300.0f);
+#define SATURN_POSITION glTranslatef(248.0f, 0.0f, 280.0f);
+#define URAN_POSITION glTranslatef(338.0f, 0.0f, 300.0f);
+#define NEPTUN_POSITION glTranslatef(-440.0f, 0.0f, 390.0f);
 
 
 GLUquadric *quad;
@@ -47,6 +51,7 @@ GLuint sunTexture;
 GLuint mercuryTexture;
 GLuint venusTexture;
 GLuint earthTexture;
+GLuint moonTexture;
 GLuint marsTexture;
 GLuint jupiterTexture;
 GLuint saturnTexture;
@@ -349,6 +354,9 @@ void initGL(void) {
 	Image *image9 = loadBMP(NEPTUN_BMP_FILE);
 	neptunTexture = loadTexture(image9);
 
+	Image *image10 = loadBMP(MOON_BMP_FILE);
+	moonTexture = loadTexture(image10);
+
 	quad = gluNewQuadric();
 	gluQuadricDrawStyle(quad, GLU_FILL);
 	gluQuadricNormals(quad, GLU_SMOOTH);
@@ -457,13 +465,21 @@ void drawEarth() {
 			glRotatef(-90, 1, 0, 0);//rotate 90 deg!
 			g_EarthMaterial.Apply();
 			gluSphere(quad, EARTH_SIZE, 360, 180);
+				glPushMatrix();
+					setTexture(moonTexture);
+					MOON_POSITION
+					gluSphere(quad, MOON_SIZE, 360, 180);//DRAW MOON
+				glPopMatrix();
+
 		glPopMatrix();
+
 	glPopMatrix();
 
 	glDisable(GL_TEXTURE_2D);
 	return;
 
 }
+
 void drawMars() {
 
 	setTexture(marsTexture);

@@ -35,20 +35,21 @@
 #define URAN_BMP_FILE "uran.bmp"
 #define NEPTUN_BMP_FILE "neptun.bmp"
 
-#define MERCURY_POSITION glTranslatef(163.0f, 0.0f, 0.0f);
-#define VENUS_POSITION glTranslatef(-166.0f, 0.0f, 30.0f);
-#define EARTH_POSITION glTranslatef(-169.0f, 0.0f, 120.0f);
+#define MERCURY_POSITION glTranslatef(140.0f, 0.0f, 0.0f);
+#define VENUS_POSITION glTranslatef(-150.0f, 0.0f, 0.0f);
+#define EARTH_POSITION glTranslatef(169.0f, 0.0f, 0.0f);
 #define MOON_POSITION glTranslatef(-3.0f, 0.0f, 0.0f);//realitve to earth
-#define MARS_POSITION glTranslatef(-174.0f, 0.0f, 150.0f);
-#define JUPITER_POSITION glTranslatef(-208.0f, 0.0f, -300.0f);
-#define SATURN_POSITION glTranslatef(248.0f, 0.0f, 280.0f);
-#define URAN_POSITION glTranslatef(338.0f, 0.0f, 300.0f);
-#define NEPTUN_POSITION glTranslatef(-440.0f, 0.0f, 390.0f);
+#define MARS_POSITION glTranslatef(-174.0f, 0.0f, 0.0f);
+#define JUPITER_POSITION glTranslatef(-238.0f, 0.0f, 0.0f);
+#define SATURN_POSITION glTranslatef(288.0f, 0.0f, 0.0f);
+#define URAN_POSITION glTranslatef(358.0f, 0.0f, 0.0f);
+#define NEPTUN_POSITION glTranslatef(-460.0f, 0.0f, 0.0f);
 
 #define CAMERA_1 1
 #define CAMERA_2 2
 #define CAMERA_3 3
 #define CAMERA_4 4
+#define CAMERA_5 5
 
 GLUquadric *quad;
 GLuint sunTexture;
@@ -63,21 +64,21 @@ GLuint uranTexture;
 GLuint neptunTexture;
 
 //planets vars
-float mercuryAngle = 0.0f;
+float mercuryAngle = 80.0f;
 float mercuryAngleItself = 0.0f;
-float venusAngle = 0.0f;
+float venusAngle = 30.0f;
 float venusAngleItself = 0.0f;
 float earthAngle = 0.0f;
 float earthAngleItself = 0.0f;
-float marsAngle = 0.0f;
+float marsAngle = 150.0f;
 float marsAngleItself = 0.0f;
-float jupiterAngle = 0.0f;
+float jupiterAngle = 50.0f;
 float jupiterAngleItself = 0.0f;
-float saturnAngle = 0.0f;
+float saturnAngle = 90.0f;
 float saturnAngleItself = 0.0f;
-float uranAngle = 0.0f;
+float uranAngle = 180.0f;
 float uranAngleItself = 0.0f;
-float neptunAngle = 0.0f;
+float neptunAngle = 160.0f;
 float neptunAngleItself = 0.0f;
 float sunAngle = 0.0f;
 
@@ -108,6 +109,9 @@ float deltaAngleY = 0.0f;
 int xOrigin = -1;
 int yOrigin = -1;
 
+bool cameraLocked = false;
+bool followEarth = false;
+bool followMars = false;
 
 struct float3
 {
@@ -252,20 +256,28 @@ void processSpecialKeys(int key, int xx, int yy) {
 		//	lz = -cos(angleX);
 		//	break;
 	case GLUT_KEY_UP:
-		x += lx * fraction;
-		z += lz * fraction;
-		y += ly * fraction;
+		if (!cameraLocked) {
+			x += lx * fraction;
+			z += lz * fraction;
+			y += ly * fraction;
+		}
 		break;
 	case GLUT_KEY_DOWN:
-		x -= lx * fraction;
-		z -= lz * fraction;
-		y -= ly * fraction;
+		if (!cameraLocked) {
+			x -= lx * fraction;
+			z -= lz * fraction;
+			y -= ly * fraction;
+		}
 		break;
 	case GLUT_KEY_PAGE_UP:
-		y += fraction;
+		if (!cameraLocked) {
+			y += fraction;
+		}
 		break;
 	case GLUT_KEY_PAGE_DOWN:
-		y -= fraction;
+		if (!cameraLocked) {
+			y -= fraction;
+		}
 		break;
 	}
 }
@@ -380,21 +392,21 @@ void setTexture(GLuint texture) {
 }
 
 void moves() {
-	mercuryAngle += (0.05 * speed);
+	mercuryAngle += (0.09 * speed);
 	mercuryAngleItself += (1.0f * speed);
-	venusAngle += (0.05 * speed);
+	venusAngle += (0.15 * speed);
 	venusAngleItself += (1.0f * speed);
-	earthAngle += (0.05 * speed);
+	earthAngle += (0.10 * speed);
 	earthAngleItself += (1.0f * speed);
-	marsAngle += (0.05 * speed);
+	marsAngle += (0.15 * speed);
 	marsAngleItself += (1.0f * speed);
-	jupiterAngle += (0.05 * speed);
+	jupiterAngle += (0.25 * speed);
 	jupiterAngleItself += (1.0f * speed);
-	saturnAngle += (0.05 * speed);
+	saturnAngle += (0.20 * speed);
 	saturnAngleItself += (1.0f * speed);
-	uranAngle += (0.05 * speed);
+	uranAngle += (0.18 * speed);
 	uranAngleItself += (1.0f * speed);
-	neptunAngle += (0.05 * speed);
+	neptunAngle += (0.22 * speed);
 	neptunAngleItself += (1.0f * speed);
 	sunAngle += (0.2 * speed);
 }
@@ -606,13 +618,24 @@ void display(void)
 
 	// Reset transformations
 	glLoadIdentity();
-
+	moves();
 	// Set the camera
+	if (followEarth) {
+		x =  169.0f * cos(earthAngle * PI / 180.0);
+		y = 0.68f;
+		z = -169.0f * sin(earthAngle * PI / 180.0);
+	}
+	else if (followMars)
+	{
+		x = -174.0f * cos(marsAngle * PI / 180.0);
+		y = 0.35f;
+		z = 174.0f * sin(marsAngle * PI / 180.0);
+	}
 	gluLookAt(x, y, z,
 		x + lx, y + ly, z + lz,
 		xup, yup, zup);
 
-	moves();
+
 	drawSun();
 	drawMercury();
 	drawVenus();
@@ -632,39 +655,56 @@ void display(void)
 	glFlush();// Flush buffers to screen
 
 }
+void makeCameraFree() {
+	cameraLocked = false;
+	followEarth = false;
+	followMars = false;
+}
+void zeroLookAt() {
+	lx = 0.0f;
+	ly = 0.0f;
+	lz = -1.0f;
+	angleX = 0.0f;//make angle and delta zeros - to move mouse after changing camera
+	angleY = 0.0f;
+	deltaAngleX = 0.0f;
+	deltaAngleY = 0.0f;
+}
 void processMenuEvents(int option) {
 
 	switch (option) {
 	case CAMERA_1:
+		makeCameraFree();
 		x = 0.0f;
 		y = 0.0f;
 		z = 500.0f;
-		lx = 0.0f;
-		ly = 0.0f;
-		lz = -1.0f;
-		angleX = 0.0f;//make angle and delta zeros - to move mouse after changing camera
-		angleY = 0.0f;
-		deltaAngleX = 0.0f;
-		deltaAngleY = 0.0f;
+		zeroLookAt();
 		 break;
 	case CAMERA_2:
+		makeCameraFree();
 		x = 0.0f;
 		y = 80.0f;
 		z = 0.0f;
-		lx = 0.0f;
-		ly = 0.0f;
-		lz = -1.0f;
-		angleX = 0.0f;//make angle and delta zeros - to move mouse after changing camera
-		angleY = 0.0f;
-		deltaAngleX = 0.0f;
-		deltaAngleY = 0.0f;
-		 break;
+		zeroLookAt();
+		break;
 	case CAMERA_3:
+		makeCameraFree();
+		zeroLookAt();
+		cameraLocked = true;
+		followEarth = true;
 		 break;
 	case CAMERA_4:
+		makeCameraFree();
+		zeroLookAt();
+		cameraLocked = true;
+		followMars = true;
+		break;
+	case CAMERA_5:
+		makeCameraFree();
+		zeroLookAt();
 		break;
 	}
 }
+
 void createGLUTMenu() {
 
 	int menu;
@@ -679,7 +719,7 @@ void createGLUTMenu() {
 	glutAddMenuEntry("Camera 2", CAMERA_2);
 	glutAddMenuEntry("Follow Earth", CAMERA_3);
 	glutAddMenuEntry("Follow Mars", CAMERA_4);
-
+	glutAddMenuEntry("Follow Disable", CAMERA_5);
 	// attach the menu to the right button
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 	/*glutDetachMenu(GLUT_RIGHT_BUTTON);*/

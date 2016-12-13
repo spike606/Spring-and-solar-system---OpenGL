@@ -45,6 +45,10 @@
 #define URAN_POSITION glTranslatef(338.0f, 0.0f, 300.0f);
 #define NEPTUN_POSITION glTranslatef(-440.0f, 0.0f, 390.0f);
 
+#define CAMERA_1 1
+#define CAMERA_2 2
+#define CAMERA_3 3
+#define CAMERA_4 4
 
 GLUquadric *quad;
 GLuint sunTexture;
@@ -97,7 +101,7 @@ float angleY = 0.0;
 
 float lx = 0.0f, lz = -1.0f, ly = 0.0f;// actual vector representing the camera's direction
 float x = 0.0f, z = 100.0f, y = 0.0f;// XZ position of the camera
-
+float xup = 0.0f, yup = 1.0f, zup = 0.0f;
 float deltaAngleX = 0.0f;
 float deltaAngleY = 0.0f;
 
@@ -606,7 +610,7 @@ void display(void)
 	// Set the camera
 	gluLookAt(x, y, z,
 		x + lx, y + ly, z + lz,
-		0.0f, 1.0f, 0.0f);
+		xup, yup, zup);
 
 	moves();
 	drawSun();
@@ -628,8 +632,61 @@ void display(void)
 	glFlush();// Flush buffers to screen
 
 }
+void processMenuEvents(int option) {
+
+	switch (option) {
+	case CAMERA_1:
+		x = 0.0f;
+		y = 0.0f;
+		z = 500.0f;
+		lx = 0.0f;
+		ly = 0.0f;
+		lz = -1.0f;
+		angleX = 0.0f;//make angle and delta zeros - to move mouse after changing camera
+		angleY = 0.0f;
+		deltaAngleX = 0.0f;
+		deltaAngleY = 0.0f;
+		 break;
+	case CAMERA_2:
+		x = 0.0f;
+		y = 80.0f;
+		z = 0.0f;
+		lx = 0.0f;
+		ly = 0.0f;
+		lz = -1.0f;
+		angleX = 0.0f;//make angle and delta zeros - to move mouse after changing camera
+		angleY = 0.0f;
+		deltaAngleX = 0.0f;
+		deltaAngleY = 0.0f;
+		 break;
+	case CAMERA_3:
+		 break;
+	case CAMERA_4:
+		break;
+	}
+}
+void createGLUTMenu() {
+
+	int menu;
+
+	// create the menu and
+	// tell glut that "processMenuEvents" will
+	// handle the events
+	menu = glutCreateMenu(processMenuEvents);
+
+	//add entries to our menu
+	glutAddMenuEntry("Camera 1", CAMERA_1);
+	glutAddMenuEntry("Camera 2", CAMERA_2);
+	glutAddMenuEntry("Follow Earth", CAMERA_3);
+	glutAddMenuEntry("Follow Mars", CAMERA_4);
+
+	// attach the menu to the right button
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+	/*glutDetachMenu(GLUT_RIGHT_BUTTON);*/
+}
 int main(int argc, char **argv)
 {
+
 	glutInit(&argc, argv);
 	glutInitWindowSize(600, 600);
 	glutCreateWindow("Spring");
@@ -638,6 +695,7 @@ int main(int argc, char **argv)
 
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
+	createGLUTMenu();
 	glutSpecialFunc(processSpecialKeys);
 	glutKeyboardFunc(processKeyboardKeys);
 	glutMouseFunc(mouseButton);
